@@ -23,5 +23,9 @@
   "bugs": {
     "url": "https://github.com/ckcr4lyf/systemxd/issues"
   },
-  "homepage": "https://github.com/ckcr4lyf/systemxd#readme"
+  "homepage": "https://github.com/ckcr4lyf/systemxd#readme",
+  "dependencies": {
+    "@types/node": "^14.14.6",
+    "jimp": "^0.16.1"
+  }
 }
