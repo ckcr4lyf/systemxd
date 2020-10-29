@@ -69,9 +69,9 @@ for (let screenshot of screenshots){
             const row = rowAverage(image, y);
             
             if (Math.abs(row.net - previousRow.net) > SETTINGS.ROW_TO_ROW_THRESHOLD){
-                console.log(`Row #${y}: Found an average delta greater than threshold!`);
-                console.log(`Previous row: ${previousRow.toString()}`);
-                console.log(`Current row: ${row.toString()}`);
+                log(`[${screenshot}] Row #${y}: Found an average delta greater than threshold!`);
+                log(`[${screenshot}] Previous row: ${previousRow.toString()}`);
+                log(`[${screenshot}] Current row: ${row.toString()}`);
                 blackFlag = false;
             }
 
@@ -81,7 +81,7 @@ for (let screenshot of screenshots){
 
         y--;
 
-        log(`${screenshot}: Black border at top is ${y} pixels tall`);
+        log(`[${screenshot}] Black border at top is ${y} pixels tall`);
 
     }).catch((error) => {
         log(`[JIMP] Failed to read ${screenshot}`)
