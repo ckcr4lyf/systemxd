@@ -1,5 +1,5 @@
 exports.SETTINGS = {
-    BASE_FILENAME: 'base.vpy',
+    BASE_FILENAME: 'base.vs',
     TARGET_BITRATE: 9000,
     TOLERANCE: 500,
     BLACK_THRESHOLD: 30,

@@ -36,10 +36,13 @@ const script = baseScript + lines.join('\n');
 // Write this script out to a "ffindex.vpy" file and run it
 fs.writeFileSync(path.join(dirPath, 'ffindex.vpy'), script);
 log(`Saved ffindex.vpy`);
-// Now run it?
 const ffindexCommand = `vspipe ffindex.vpy .`;
-const ffindexResult = spawnSync(ffindexCommand, {cwd: dirPath});
-console.log(ffindexResult);
-log(ffindexResult.stdout.toString());
+const ffindexResult = spawnSync(ffindexCommand, {shell: true, cwd: dirPath});
+
+if (ffindexResult.status !== 0){
+    log(`ffindex failed. stderr: ${ffindexResult.stderr.toString()}`);
+} else {
+    log(ffindexResult.stdout.toString());
+}
 
 //Read dir, get files with prefix and pass to image function?
