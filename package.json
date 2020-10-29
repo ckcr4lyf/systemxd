@@ -1,0 +1,27 @@
+{
+  "name": "systemxd",
+  "version": "1.0.0",
+  "description": "A tool to make encoding simpler",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo OK",
+    "build": "tsc -p .",
+    "start": "node build/index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ckcr4lyf/systemxd.git"
+  },
+  "keywords": [
+    "vapoursynth",
+    "encoding",
+    "x264",
+    "bluray"
+  ],
+  "author": "Raghu Saxena",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/ckcr4lyf/systemxd/issues"
+  },
+  "homepage": "https://github.com/ckcr4lyf/systemxd#readme"
+}
