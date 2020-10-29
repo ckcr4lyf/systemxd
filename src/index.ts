@@ -38,7 +38,8 @@ fs.writeFileSync(path.join(dirPath, 'ffindex.vpy'), script);
 log(`Saved ffindex.vpy`);
 // Now run it?
 const ffindexCommand = `vspipe ffindex.vpy .`;
-const ffindexResult = spawnSync(ffindexCommand);
+const ffindexResult = spawnSync(ffindexCommand, {cwd: dirPath});
+console.log(ffindexResult);
 log(ffindexResult.stdout.toString());
 
 //Read dir, get files with prefix and pass to image function?
