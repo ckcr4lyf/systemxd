@@ -1,9 +1,13 @@
 import * as path from 'path';
 import * as fs from 'fs';
+import jimp from 'jimp';
 import crypto from 'crypto';
-import { SETTINGS } from '../settings'
-import { log } from './utilities';
 import { spawnSync } from 'child_process';
+
+import { SETTINGS } from '../settings'
+import { rowAverage } from './imageFunctions';
+import { log } from './utilities';
+import { Pixel } from './classes';
 
 const baseScript = fs.readFileSync(path.join(__dirname, '../', SETTINGS.BASE_FILENAME));
 const filepath = process.argv[2]; // node ./build/index.js ../ubuntu.iso
@@ -21,7 +25,9 @@ const loopText = `
 src = core.ffms2.Source('${fullPath}')
 src = core.resize.Bicubic(src, format=vs.RGB24, matrix_in_s="709")
 src = core.imwri.Write(clip=src, imgformat="PNG", filename="${imagePrefix}_%03d.png")
-limit = 50000
+limit = len(src)
+if limit > 50000:
+    limit = 50000
 skip = 5000
 
 for x in range(2000, limit, skip):
@@ -46,3 +52,39 @@ if (ffindexResult.status !== 0){
 }
 
 //Read dir, get files with prefix and pass to image function?
+const filesInDir = fs.readdirSync(dirPath);
+const screenshots = filesInDir.filter(filename => filename.startsWith(imagePrefix));
+
+for (let screenshot of screenshots){
+    
+    jimp.read(path.join(dirPath, screenshot)).then((image) => {
+        const HEIGHT = image.bitmap.height;
+        const WIDTH = image.bitmap.width;
+
+        let y = 0;
+        let blackFlag = true;
+        let previousRow = rowAverage(image, 0);
+
+        while (y < HEIGHT && blackFlag === true){
+            const row = rowAverage(image, y);
+            
+            if (Math.abs(row.net - previousRow.net) > SETTINGS.ROW_TO_ROW_THRESHOLD){
+                console.log(`Row #${y}: Found an average delta greater than threshold!`);
+                console.log(`Previous row: ${previousRow.toString()}`);
+                console.log(`Current row: ${row.toString()}`);
+                blackFlag = false;
+            }
+
+            previousRow = row;
+            y++;
+        }
+
+        y--;
+
+        log(`${screenshot}: Black border at top is ${y} pixels tall`);
+
+    }).catch((error) => {
+        log(`[JIMP] Failed to read ${screenshot}`)
+    })
+
+}

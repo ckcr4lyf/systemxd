@@ -15,6 +15,7 @@ export class Pixel {
         this.r = pixel.r;
         this.g = pixel.g;
         this.b = pixel.b;
+        this.net = (this.r + this.g + this.b) / 3;
     }
 
     /**

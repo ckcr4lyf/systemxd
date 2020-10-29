@@ -24,7 +24,7 @@ export const isBlack = (pixel: number) => {
  * @param {*} image An instance of a jimp image
  * @param {number} rowIndex The row index (zero based)
  */
-const row_average = (image: any, rowIndex: number) => {
+export const rowAverage = (image: jimp, rowIndex: number) => {
 
     const WIDTH = image.bitmap.width;
 
