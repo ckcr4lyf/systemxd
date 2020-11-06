@@ -9,58 +9,58 @@ import { rowAverage } from './imageFunctions';
 import { log } from './utilities';
 import { Pixel } from './classes';
 
-const baseScript = fs.readFileSync(path.join(__dirname, '../', SETTINGS.BASE_FILENAME));
-const filepath = process.argv[2]; // node ./build/index.js ../ubuntu.iso
-const fullPath = path.resolve(process.cwd(), filepath);
-const dirPath = path.dirname(fullPath);
+(async() => {
 
-const jobId = crypto.randomBytes(4).toString('hex');
-log(`Starting job ${jobId}`)
-const imagePrefix = `Source_${jobId}`;
-// First we ffindex the source
-// And make 10 screenshots?
+    const baseScript = fs.readFileSync(path.join(__dirname, '../', SETTINGS.BASE_FILENAME));
+    const filepath = process.argv[2]; // node ./build/index.js ../ubuntu.iso
+    const fullPath = path.resolve(process.cwd(), filepath);
+    const dirPath = path.dirname(fullPath);
 
-let lines = [];
-const loopText = `
-src = core.ffms2.Source('${fullPath}')
-src = core.resize.Bicubic(src, format=vs.RGB24, matrix_in_s="709")
-src = core.imwri.Write(clip=src, imgformat="PNG", filename="${imagePrefix}_%03d.png")
-limit = len(src)
-if limit > 50000:
-    limit = 50000
-skip = 5000
+    const jobId = crypto.randomBytes(4).toString('hex');
+    log(`Starting job ${jobId}`)
+    const imagePrefix = `Source_${jobId}`;
 
-for x in range(2000, limit, skip):
-    src.get_frame(x)
+    let lines = [];
+    const loopText = `
+    src = core.ffms2.Source('${fullPath}')
+    src = core.resize.Bicubic(src, format=vs.RGB24, matrix_in_s="709")
+    src = core.imwri.Write(clip=src, imgformat="PNG", filename="${imagePrefix}_%03d.png")
+    limit = len(src)
+    if limit > 50000:
+        limit = 50000
+    skip = 5000
 
-dummy = core.std.BlankClip(length=1)
-dummy.set_output()
-`
-lines.push(loopText);
-const script = baseScript + lines.join('\n');
+    for x in range(2000, limit, skip):
+        src.get_frame(x)
 
-// Write this script out to a "ffindex.vpy" file and run it
-fs.writeFileSync(path.join(dirPath, 'ffindex.vpy'), script);
-log(`Saved ffindex.vpy`);
-const ffindexCommand = `vspipe ffindex.vpy .`;
-const ffindexResult = spawnSync(ffindexCommand, {shell: true, cwd: dirPath});
+    dummy = core.std.BlankClip(length=1)
+    dummy.set_output()
+    `
+    lines.push(loopText);
+    const script = baseScript + lines.join('\n');
 
-if (ffindexResult.status !== 0){
-    log(`ffindex failed. stderr: ${ffindexResult.stderr.toString()}`);
-} else {
-    log(ffindexResult.stdout.toString());
-}
+    fs.writeFileSync(path.join(dirPath, 'ffindex.vpy'), script);
+    log(`Saved ffindex.vpy`);
+    const ffindexCommand = `vspipe ffindex.vpy .`;
+    const ffindexResult = spawnSync(ffindexCommand, {shell: true, cwd: dirPath});
 
-//Read dir, get files with prefix and pass to image function?
-const filesInDir = fs.readdirSync(dirPath);
-const screenshots = filesInDir.filter(filename => filename.startsWith(imagePrefix));
+    if (ffindexResult.status !== 0){
+        log(`ffindex failed. stderr: ${ffindexResult.stderr.toString()}`);
+    } else {
+        log(ffindexResult.stdout.toString());
+    }
 
-for (let screenshot of screenshots){
-    
-    jimp.read(path.join(dirPath, screenshot)).then((image) => {
+    const filesInDir = fs.readdirSync(dirPath);
+    const screenshots = filesInDir.filter(filename => filename.startsWith(imagePrefix));
+    log(`Starting black border detection...`);
+
+    for (let screenshot of screenshots){
+        
+        let image = await jimp.read(path.join(dirPath, screenshot));
         const HEIGHT = image.bitmap.height;
         const WIDTH = image.bitmap.width;
 
+        //Get top black border
         let y = 0;
         let blackFlag = true;
         let previousRow = rowAverage(image, 0);
@@ -80,11 +80,32 @@ for (let screenshot of screenshots){
         }
 
         y--;
-
         log(`[${screenshot}] Black border at top is ${y} pixels tall`);
 
-    }).catch((error) => {
-        log(`[JIMP] Failed to read ${screenshot}`)
-    })
+        //Get bottom black border
+        y = HEIGHT - 1;
+        blackFlag = true;
+        previousRow = rowAverage(image, y);
 
-}
+        while (y > 0 && blackFlag === true){
+            const row = rowAverage(image, y);
+
+            if (Math.abs(row.net - previousRow.net) > SETTINGS.ROW_TO_ROW_THRESHOLD){
+                log(`[${screenshot}] Row #${y}: Found an average delta greater than threshold!`);
+                log(`[${screenshot}] Previous row: ${previousRow.toString()}`);
+                log(`[${screenshot}] Current row: ${row.toString()}`);
+                blackFlag = false;
+            }
+
+            previousRow = row;
+            y--;
+        }
+
+        y++;
+        log(`[${screenshot}] Black border at bottom is ${y} pixels tall`);
+    }
+
+    //Use crop vals we found
+    //Make test encodes w/ script to target bitrate
+
+})();
