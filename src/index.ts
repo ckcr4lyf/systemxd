@@ -167,7 +167,8 @@ src.set_output()
         let x264Log: string[] = [];
 
         let x264 = spawn(test_x264_command, {
-            shell: true
+            shell: true,
+            cwd: dirPath
         });
     
         x264.stderr.on('data', data => {
