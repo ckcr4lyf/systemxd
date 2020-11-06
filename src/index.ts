@@ -53,15 +53,17 @@ dummy.set_output()
     const filesInDir = fs.readdirSync(dirPath);
     const screenshots = filesInDir.filter(filename => filename.startsWith(imagePrefix));
     log(`Starting black border detection...`);
-    let cropVals: {top: number, bottom: number}[] = [];
+
+    let cropVals = {top: 0, bottom: 0}
     let topCrops: Record<number, number> = {};
     let bottomCrops: Record<number, number> = {};
+    let HEIGHT = 0, WIDTH = 0;
 
     for (let screenshot of screenshots){
         
         let image = await jimp.read(path.join(dirPath, screenshot));
-        const HEIGHT = image.bitmap.height;
-        const WIDTH = image.bitmap.width;
+        HEIGHT = image.bitmap.height;
+        WIDTH = image.bitmap.width;
         let crop = {top: 0, bottom: 0};
 
         //Get top black border
@@ -123,16 +125,22 @@ dummy.set_output()
         }
 
         bottomCrops[crop.bottom] = bottomCrops[crop.bottom] + 1 || 1;
-        cropVals.push(crop);
     }
 
-    console.log(topCrops);
-    console.log(bottomCrops);
+    // console.log(topCrops);
+    // console.log(bottomCrops);
     let topMax = sortCropRecord(topCrops);
     let bottomMax = sortCropRecord(bottomCrops);
     log(`Max at top is ${topMax} with a count of ${topCrops[topMax]}`);
     log(`Max at bottom is ${bottomMax} with a count of ${bottomCrops[bottomMax]}`);
-    //Use crop vals we found
-    //Make test encodes w/ script to target bitrate
 
+    if (HEIGHT - topMax > 10){
+        cropVals.top = topMax
+    }
+
+    if (HEIGHT - bottomMax > 10){
+        cropVals.bottom = bottomMax;
+    }
+
+    log(`Final crop values are: TOP=${cropVals.top}, BOTTOM=${cropVals.bottom}`);
 })();
