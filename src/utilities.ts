@@ -23,7 +23,7 @@ export const sortCropRecord = (crops: Record<number, number>) => {
     let max = keys[0];
     
     for (let i = 0; i < keys.length; i++){
-        if (crops[keys[i]] > crops[keys[max]]){
+        if (crops[keys[i]] > crops[max]){
             max = keys[i];
         }
     }
