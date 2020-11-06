@@ -223,7 +223,7 @@ src.set_output()
     fs.writeFileSync(path.join(dirPath, `final_script_${jobId}.vpy`), finalScript);
     log(`Saved final script`);
     log(`Starting final encode...\n`);
-    const finalEncodeCommand = `vspipe --y4m test_script_${jobId}.vpy - | x264 --demuxer y4m  --preset veryslow --level 41 --vbv-bufsize 78125 --vbv-maxrate 62500 --merange 32 --bframes 16 --deblock -3:-3 --no-fast-pskip --rc-lookahead 250 --qcomp 0.65 --psy-rd 1.00:0.00 --aq-mode 2 --aq-strength 1.00 --crf ${crf} - --output Final_Encode_${jobId}.mkv`;
+    const finalEncodeCommand = `vspipe --y4m final_script_${jobId}.vpy - | x264 --demuxer y4m  --preset veryslow --level 41 --vbv-bufsize 78125 --vbv-maxrate 62500 --merange 32 --bframes 16 --deblock -3:-3 --no-fast-pskip --rc-lookahead 250 --qcomp 0.65 --psy-rd 1.00:0.00 --aq-mode 2 --aq-strength 1.00 --crf ${crf} - --output Final_Encode_${jobId}.mkv`;
     let x264Log: string[] = [];
 
     let x264 = spawn(finalEncodeCommand, {
