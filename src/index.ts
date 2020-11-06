@@ -92,7 +92,7 @@ dummy.set_output()
             log(`[${screenshot}] Black border at top is ${++crop.top} pixels tall (rounded up due to odd crop)`);
         }
 
-        topCrops[crop.top] = topCrops[crop.top] + 1 || 0;
+        topCrops[crop.top] = topCrops[crop.top] + 1 || 1;
 
         //Get bottom black border
         y = HEIGHT - 1;
@@ -122,7 +122,7 @@ dummy.set_output()
             log(`[${screenshot}] Black border at bottom is ${++crop.bottom} pixels tall (rounded up due to odd crop)`);
         }
 
-        bottomCrops[crop.bottom] = bottomCrops[crop.bottom] + 1 || 0;
+        bottomCrops[crop.bottom] = bottomCrops[crop.bottom] + 1 || 1;
         cropVals.push(crop);
     }
 
