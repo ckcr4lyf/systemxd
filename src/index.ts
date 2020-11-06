@@ -102,7 +102,7 @@ dummy.set_output()
         }
 
         y++;
-        log(`[${screenshot}] Black border at bottom is ${y} pixels tall`);
+        log(`[${screenshot}] Black border at bottom is ${HEIGHT - y} pixels tall`);
     }
 
     //Use crop vals we found
