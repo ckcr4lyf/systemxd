@@ -16,16 +16,17 @@ export const calculateCropMode = (cropVals: crop[]) => {
     }
 }
 
-export const sortCropRecord = (crops: Record<number | string, number>) => {
+export const sortCropRecord = (crops: Record<number, number>) => {
 
-    const keys = Object.keys(crops);
+    const stringKeys = Object.keys(crops);
+    const keys = stringKeys.map(key => parseInt(key));
     let max = keys[0];
     
     for (let i = 0; i < keys.length; i++){
-        if (crops[keys[i]] > crops[keys[parseInt(max)]]){
+        if (crops[keys[i]] > crops[keys[max]]){
             max = keys[i];
         }
     }
 
-    return parseInt(max);
+    return max;
 }
