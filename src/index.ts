@@ -1,8 +1,9 @@
 import * as path from 'path';
 import * as fs from 'fs';
-import jimp from 'jimp';
+import jimp, { loadFont } from 'jimp';
 import crypto from 'crypto';
-import { spawnSync } from 'child_process';
+import { once } from 'events';
+import { spawnSync, spawn } from 'child_process';
 
 import { SETTINGS } from '../settings'
 import { rowAverage } from './imageFunctions';
@@ -127,8 +128,6 @@ dummy.set_output()
         bottomCrops[crop.bottom] = bottomCrops[crop.bottom] + 1 || 1;
     }
 
-    // console.log(topCrops);
-    // console.log(bottomCrops);
     let topMax = sortCropRecord(topCrops);
     let bottomMax = sortCropRecord(bottomCrops);
     log(`Max at top is ${topMax} with a count of ${topCrops[topMax]}`);
@@ -143,4 +142,72 @@ dummy.set_output()
     }
 
     log(`Final crop values are: TOP=${cropVals.top}, BOTTOM=${cropVals.bottom}`);
+
+    //Start test encodes
+const testText = `
+src = core.ffms2.Source('${fullPath}')
+src = core.std.Crop(clip=src, left=0, right=0, top=${cropVals.top}, bottom=${cropVals.bottom})
+src = sgf.SelectRangeEvery(clip=src, every=3000, length=50, offset=10000)
+src.set_output()
+`
+
+    const testScript = baseScript + '\n' + testText;
+    fs.writeFileSync(path.join(dirPath, `test_script_${jobId}.vpy`), testScript);
+    log(`Saved test script`);
+
+    let crf = 17.0;
+    let bitrate = 0.0;
+    let diff = Math.abs(SETTINGS.TARGET_BITRATE -  bitrate);
+    let adjust = 0;
+    log(`Beginning CRF calibration...`);
+
+    while (diff > SETTINGS.TOLERANCE){
+        const test_x264_command = `vspipe --y4m test_script_${jobId}.vpy - | x264 --demuxer y4m  --preset veryslow --level 41 --vbv-bufsize 78125 --vbv-maxrate 62500 --merange 32 --bframes 16 --deblock -3:-3 --no-fast-pskip --rc-lookahead 250 --qcomp 0.65 --psy-rd 1.00:0.00 --aq-mode 2 --aq-strength 1.00 --crf ${crf} - --output Test_Encode_${jobId}_CRF${crf}.mkv`;
+        log(`Starting x264 test for CRF=${crf}`)
+        let x264Log: string[] = [];
+
+        let x264 = spawn(test_x264_command, {
+            shell: true
+        });
+    
+        x264.stderr.on('data', data => {
+            const str = data.toString();
+            if (str.indexOf('fps') !== -1){
+                process.stdout.clearLine(0);
+                process.stdout.cursorTo(0);
+                process.stdout.write(str);
+            } else if (str.indexOf('x264 [info]:') !== -1){
+                x264Log.push(str.trim());
+            } else {    
+                console.log(`${new Date().toISOString()}: ${data.toString().trim()}`)
+            }
+        });
+    
+        await once(x264, 'close');
+        const x264LogString = x264Log.join('\n')
+        x264Log = x264LogString.split('\n');
+        const bitrateLine = x264Log[x264Log.length - 1];
+        const position = bitrateLine.indexOf('/s:');
+        bitrate = parseFloat(bitrateLine.slice(position + 3));
+        diff = Math.abs(SETTINGS.TARGET_BITRATE - bitrate);
+
+        if (diff >= 2000){
+            adjust = 2;
+        } else if (diff < 2000 && diff > 1000){
+            adjust = 0.6;
+        } else if (diff <= 1000 && diff > 700){
+            adjust = 0.4;
+        } else if (diff <= 700 && diff > 500){
+            adjust = 0.2
+        } else {
+            log(`Found optimal CRF=${crf}!`);
+            break;
+        }
+    
+        if (bitrate > SETTINGS.TARGET_BITRATE){
+            crf += adjust; //Increase CRF to decrease bitrate
+        } else {
+            crf -= adjust;
+        }
+    }
 })();
