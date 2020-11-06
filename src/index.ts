@@ -6,7 +6,7 @@ import { spawnSync } from 'child_process';
 
 import { SETTINGS } from '../settings'
 import { rowAverage } from './imageFunctions';
-import { log } from './utilities';
+import { log, sortCropRecord } from './utilities';
 import { Pixel } from './classes';
 
 (async() => {
@@ -53,12 +53,16 @@ dummy.set_output()
     const filesInDir = fs.readdirSync(dirPath);
     const screenshots = filesInDir.filter(filename => filename.startsWith(imagePrefix));
     log(`Starting black border detection...`);
+    let cropVals: {top: number, bottom: number}[] = [];
+    let topCrops: Record<number, number> = {};
+    let bottomCrops: Record<number, number> = {};
 
     for (let screenshot of screenshots){
         
         let image = await jimp.read(path.join(dirPath, screenshot));
         const HEIGHT = image.bitmap.height;
         const WIDTH = image.bitmap.width;
+        let crop = {top: 0, bottom: 0};
 
         //Get top black border
         let y = 0;
@@ -80,7 +84,15 @@ dummy.set_output()
         }
 
         y--;
-        log(`[${screenshot}] Black border at top is ${y} pixels tall`);
+        crop.top = y;
+
+        if (crop.top % 2 === 0){
+            log(`[${screenshot}] Black border at top is ${crop.top} pixels tall`);
+        } else {
+            log(`[${screenshot}] Black border at top is ${++crop.top} pixels tall (rounded up due to odd crop)`);
+        }
+
+        topCrops[crop.top] = topCrops[crop.top] + 1 || 0;
 
         //Get bottom black border
         y = HEIGHT - 1;
@@ -102,9 +114,24 @@ dummy.set_output()
         }
 
         y++;
-        log(`[${screenshot}] Black border at bottom is ${HEIGHT - y} pixels tall`);
+        crop.bottom = HEIGHT - (y + 1);
+
+        if (crop.bottom % 2 === 0){
+            log(`[${screenshot}] Black border at bottom is ${crop.bottom} pixels tall`);
+        } else {
+            log(`[${screenshot}] Black border at bottom is ${++crop.bottom} pixels tall (rounded up due to odd crop)`);
+        }
+
+        bottomCrops[crop.bottom] = bottomCrops[crop.bottom] + 1 || 0;
+        cropVals.push(crop);
     }
 
+    console.log(topCrops);
+    console.log(bottomCrops);
+    let topMax = sortCropRecord(topCrops);
+    let bottomMax = sortCropRecord(bottomCrops);
+    log(`Max at top is ${topMax} with a count of ${topCrops[topMax]}`);
+    log(`Max at bottom is ${bottomMax} with a count of ${bottomCrops[bottomMax]}`);
     //Use crop vals we found
     //Make test encodes w/ script to target bitrate
 
