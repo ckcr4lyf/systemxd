@@ -22,19 +22,19 @@ import { Pixel } from './classes';
 
     let lines = [];
     const loopText = `
-    src = core.ffms2.Source('${fullPath}')
-    src = core.resize.Bicubic(src, format=vs.RGB24, matrix_in_s="709")
-    src = core.imwri.Write(clip=src, imgformat="PNG", filename="${imagePrefix}_%03d.png")
-    limit = len(src)
-    if limit > 50000:
-        limit = 50000
-    skip = 5000
+src = core.ffms2.Source('${fullPath}')
+src = core.resize.Bicubic(src, format=vs.RGB24, matrix_in_s="709")
+src = core.imwri.Write(clip=src, imgformat="PNG", filename="${imagePrefix}_%03d.png")
+limit = len(src)
+if limit > 50000:
+    limit = 50000
+skip = 5000
 
-    for x in range(2000, limit, skip):
-        src.get_frame(x)
+for x in range(2000, limit, skip):
+    src.get_frame(x)
 
-    dummy = core.std.BlankClip(length=1)
-    dummy.set_output()
+dummy = core.std.BlankClip(length=1)
+dummy.set_output()
     `
     lines.push(loopText);
     const script = baseScript + lines.join('\n');
