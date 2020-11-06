@@ -144,7 +144,7 @@ dummy.set_output()
     log(`Final crop values are: TOP=${cropVals.top}, BOTTOM=${cropVals.bottom}`);
 
     //Start test encodes
-const testText = `
+    const testText = `
 src = core.ffms2.Source('${fullPath}')
 src = core.std.Crop(clip=src, left=0, right=0, top=${cropVals.top}, bottom=${cropVals.bottom})
 src = sgf.SelectRangeEvery(clip=src, every=3000, length=50, offset=10000)
@@ -159,7 +159,7 @@ src.set_output()
     let bitrate = 0.0;
     let diff = Math.abs(SETTINGS.TARGET_BITRATE -  bitrate);
     let adjust = 0;
-    log(`Beginning CRF calibration...`);
+    log(`Beginning CRF calibration...\n`);
 
     while (diff > SETTINGS.TOLERANCE){
         const test_x264_command = `vspipe --y4m test_script_${jobId}.vpy - | x264 --demuxer y4m  --preset veryslow --level 41 --vbv-bufsize 78125 --vbv-maxrate 62500 --merange 32 --bframes 16 --deblock -3:-3 --no-fast-pskip --rc-lookahead 250 --qcomp 0.65 --psy-rd 1.00:0.00 --aq-mode 2 --aq-strength 1.00 --crf ${crf} - --output Test_Encode_${jobId}_CRF${crf}.mkv`;
@@ -179,8 +179,9 @@ src.set_output()
                 process.stdout.write(str);
             } else if (str.indexOf('x264 [info]:') !== -1){
                 x264Log.push(str.trim());
-            } else {    
-                console.log(`${new Date().toISOString()}: ${data.toString().trim()}`)
+            } else {
+                console.log('\n');
+                log(data.toString().trim())
             }
         });
     
@@ -211,4 +212,42 @@ src.set_output()
             crf -= adjust;
         }
     }
+
+    const finalText = `
+src = core.ffms2.Source('${fullPath}')
+src = core.std.Crop(clip=src, left=0, right=0, top=${cropVals.top}, bottom=${cropVals.bottom})
+src.set_output()
+`
+
+    const finalScript = baseScript + '\n' + finalText;
+    fs.writeFileSync(path.join(dirPath, `final_script_${jobId}.vpy`), finalScript);
+    log(`Saved final script`);
+    log(`Starting final encode...\n`);
+    const finalEncodeCommand = `vspipe --y4m test_script_${jobId}.vpy - | x264 --demuxer y4m  --preset veryslow --level 41 --vbv-bufsize 78125 --vbv-maxrate 62500 --merange 32 --bframes 16 --deblock -3:-3 --no-fast-pskip --rc-lookahead 250 --qcomp 0.65 --psy-rd 1.00:0.00 --aq-mode 2 --aq-strength 1.00 --crf ${crf} - --output Final_Encode_${jobId}.mkv`;
+    let x264Log: string[] = [];
+
+    let x264 = spawn(finalEncodeCommand, {
+        shell: true,
+        cwd: dirPath
+    });
+
+    x264.stderr.on('data', data => {
+        const str = data.toString();
+        if (str.indexOf('fps') !== -1){
+            process.stdout.clearLine(0);
+            process.stdout.cursorTo(0);
+            process.stdout.write(str);
+        } else if (str.indexOf('x264 [info]:') !== -1){
+            x264Log.push(str.trim());
+        } else {
+            console.log('\n');
+            log(data.toString().trim())
+        }
+    });
+
+    await once(x264, 'close');
+    log(`Finished encoding file: Final_Encode_${jobId}.mkv`);
+    const x264LogString = x264Log.join('\n')
+    fs.writeFileSync(path.join(dirPath, `x264Log_${jobId}.log`), x264LogString);
+    log(`Saved x264 log to: x264Log_${jobId}.log`);
 })();
