@@ -25,6 +25,6 @@
   },
   "homepage": "https://github.com/ckcr4lyf/systemxd#readme",
   "dependencies": {
-    "jimp": "^0.16.1"
+    "jimp": "^0.22.10"
   }
 }
