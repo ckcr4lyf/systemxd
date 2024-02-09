@@ -27,5 +27,9 @@
   "homepage": "https://github.com/ckcr4lyf/systemxd#readme",
   "dependencies": {
     "jimp": "^0.22.10"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.17",
+    "typescript": "^5.3.3"
   }
 }
