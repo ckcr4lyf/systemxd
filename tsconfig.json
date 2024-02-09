@@ -1,16 +1,21 @@
 {
     "compilerOptions": {
-        "target": "ES2017",
-        "module": "CommonJS",
+        "target": "ESNext",
+        "module": "ES2022",
         "noImplicitAny": true,
         "removeComments": false,
+        "strictNullChecks": true,
         "preserveConstEnums": true,
+        "esModuleInterop": true,
         "outDir": "./build/",
         "sourceMap": true,
-        "esModuleInterop": true
+        "moduleResolution": "node",
+        "declaration": true,
+        "strict": true,
     },
     "include": [
-        "src/**/*"
+        "src/**/*",
+        "__tests__/"
     ],
     "exclude": [
         "node_modules",
