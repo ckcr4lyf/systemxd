@@ -3,9 +3,10 @@
   "version": "1.0.0",
   "description": "A tool to make encoding simpler",
   "main": "index.js",
+  "type": "module",
   "scripts": {
     "test": "jest",
-    "build": "tsc -p .",
+    "build": "rm -rf build/ && tsc",
     "start": "node build/index.js"
   },
   "repository": {
